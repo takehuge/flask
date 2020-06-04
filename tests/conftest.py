@@ -1,13 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-    tests.conftest
-    ~~~~~~~~~~~~~~
-
-    :copyright: © 2010 by the Pallets team.
-    :license: BSD, see LICENSE for more details.
-"""
-
-import gc
 import os
 import pkgutil
 import sys
@@ -20,7 +10,7 @@ import flask
 from flask import Flask as _Flask
 
 
-@pytest.fixture(scope='session', autouse=True)
+@pytest.fixture(scope="session", autouse=True)
 def _standard_os_environ():
     """Set up ``os.environ`` at the start of the test session to have
     standard values. Returns a list of operations that is used by
@@ -28,11 +18,11 @@ def _standard_os_environ():
     """
     mp = monkeypatch.MonkeyPatch()
     out = (
-        (os.environ, 'FLASK_APP', monkeypatch.notset),
-        (os.environ, 'FLASK_ENV', monkeypatch.notset),
-        (os.environ, 'FLASK_DEBUG', monkeypatch.notset),
-        (os.environ, 'FLASK_RUN_FROM_CLI', monkeypatch.notset),
-        (os.environ, 'WERKZEUG_RUN_MAIN', monkeypatch.notset),
+        (os.environ, "FLASK_APP", monkeypatch.notset),
+        (os.environ, "FLASK_ENV", monkeypatch.notset),
+        (os.environ, "FLASK_DEBUG", monkeypatch.notset),
+        (os.environ, "FLASK_RUN_FROM_CLI", monkeypatch.notset),
+        (os.environ, "WERKZEUG_RUN_MAIN", monkeypatch.notset),
     )
 
     for _, key, value in out:
@@ -55,12 +45,12 @@ def _reset_os_environ(monkeypatch, _standard_os_environ):
 
 class Flask(_Flask):
     testing = True
-    secret_key = 'test key'
+    secret_key = "test key"
 
 
 @pytest.fixture
 def app():
-    app = Flask('flask_test', root_path=os.path.dirname(__file__))
+    app = Flask("flask_test", root_path=os.path.dirname(__file__))
     return app
 
 
@@ -84,8 +74,7 @@ def client(app):
 @pytest.fixture
 def test_apps(monkeypatch):
     monkeypatch.syspath_prepend(
-        os.path.abspath(os.path.join(
-            os.path.dirname(__file__), 'test_apps'))
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "test_apps"))
     )
 
 
@@ -115,14 +104,13 @@ def limit_loader(request, monkeypatch):
     if not request.param:
         return
 
-    class LimitedLoader(object):
+    class LimitedLoader:
         def __init__(self, loader):
             self.loader = loader
 
         def __getattr__(self, name):
-            if name in ('archive', 'get_filename'):
-                msg = 'Mocking a loader which does not have `%s.`' % name
-                raise AttributeError(msg)
+            if name in {"archive", "get_filename"}:
+                raise AttributeError(f"Mocking a loader which does not have {name!r}.")
             return getattr(self.loader, name)
 
     old_get_loader = pkgutil.get_loader
@@ -130,30 +118,31 @@ def limit_loader(request, monkeypatch):
     def get_loader(*args, **kwargs):
         return LimitedLoader(old_get_loader(*args, **kwargs))
 
-    monkeypatch.setattr(pkgutil, 'get_loader', get_loader)
+    monkeypatch.setattr(pkgutil, "get_loader", get_loader)
 
 
 @pytest.fixture
 def modules_tmpdir(tmpdir, monkeypatch):
     """A tmpdir added to sys.path."""
-    rv = tmpdir.mkdir('modules_tmpdir')
+    rv = tmpdir.mkdir("modules_tmpdir")
     monkeypatch.syspath_prepend(str(rv))
     return rv
 
 
 @pytest.fixture
 def modules_tmpdir_prefix(modules_tmpdir, monkeypatch):
-    monkeypatch.setattr(sys, 'prefix', str(modules_tmpdir))
+    monkeypatch.setattr(sys, "prefix", str(modules_tmpdir))
     return modules_tmpdir
 
 
 @pytest.fixture
 def site_packages(modules_tmpdir, monkeypatch):
     """Create a fake site-packages."""
-    rv = modules_tmpdir \
-        .mkdir('lib') \
-        .mkdir('python{x[0]}.{x[1]}'.format(x=sys.version_info)) \
-        .mkdir('site-packages')
+    rv = (
+        modules_tmpdir.mkdir("lib")
+        .mkdir(f"python{sys.version_info.major}.{sys.version_info.minor}")
+        .mkdir("site-packages")
+    )
     monkeypatch.syspath_prepend(str(rv))
     return rv
 
@@ -164,26 +153,30 @@ def install_egg(modules_tmpdir, monkeypatch):
     sys.path."""
 
     def inner(name, base=modules_tmpdir):
-        if not isinstance(name, str):
-            raise ValueError(name)
         base.join(name).ensure_dir()
-        base.join(name).join('__init__.py').ensure()
+        base.join(name).join("__init__.py").ensure()
 
-        egg_setup = base.join('setup.py')
-        egg_setup.write(textwrap.dedent("""
-        from setuptools import setup
-        setup(name='{0}',
-              version='1.0',
-              packages=['site_egg'],
-              zip_safe=True)
-        """.format(name)))
+        egg_setup = base.join("setup.py")
+        egg_setup.write(
+            textwrap.dedent(
+                f"""
+                from setuptools import setup
+                setup(
+                    name="{name}",
+                    version="1.0",
+                    packages=["site_egg"],
+                    zip_safe=True,
+                )
+                """
+            )
+        )
 
         import subprocess
+
         subprocess.check_call(
-            [sys.executable, 'setup.py', 'bdist_egg'],
-            cwd=str(modules_tmpdir)
+            [sys.executable, "setup.py", "bdist_egg"], cwd=str(modules_tmpdir)
         )
-        egg_path, = modules_tmpdir.join('dist/').listdir()
+        (egg_path,) = modules_tmpdir.join("dist/").listdir()
         monkeypatch.syspath_prepend(str(egg_path))
         return egg_path
 
@@ -196,10 +189,3 @@ def purge_module(request):
         request.addfinalizer(lambda: sys.modules.pop(name, None))
 
     return inner
-
-
-@pytest.fixture(autouse=True)
-def catch_deprecation_warnings(recwarn):
-    yield
-    gc.collect()
-    assert not recwarn.list, '\n'.join(str(w.message) for w in recwarn.list)

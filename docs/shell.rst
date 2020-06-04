@@ -1,5 +1,3 @@
-.. _shell:
-
 Working with the Shell
 ======================
 
@@ -20,10 +18,10 @@ can you do?
 
 This is where some helper functions come in handy.  Keep in mind however
 that these functions are not only there for interactive shell usage, but
-also for unittesting and other situations that require a faked request
+also for unit testing and other situations that require a faked request
 context.
 
-Generally it's recommended that you read the :ref:`request-context`
+Generally it's recommended that you read the :doc:`reqcontext`
 chapter of the documentation first.
 
 Command Line Interface
@@ -34,7 +32,7 @@ Starting with Flask 0.11 the recommended way to work with the shell is the
 For instance the shell is automatically initialized with a loaded
 application context.
 
-For more information see :ref:`cli`.
+For more information see :doc:`/cli`.
 
 Creating a Request Context
 --------------------------

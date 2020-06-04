@@ -142,14 +142,14 @@ read from the file.
 
 :func:`click.command` defines a command line command called ``init-db``
 that calls the ``init_db`` function and shows a success message to the
-user. You can read :ref:`cli` to learn more about writing commands.
+user. You can read :doc:`/cli` to learn more about writing commands.
 
 
 Register with the Application
 -----------------------------
 
 The ``close_db`` and ``init_db_command`` functions need to be registered
-with the application instance, otherwise they won't be used by the
+with the application instance; otherwise, they won't be used by the
 application. However, since you're using a factory function, that
 instance isn't available when writing the functions. Instead, write a
 function that takes an application and does the registration.
@@ -196,15 +196,15 @@ previous page.
     If you're still running the server from the previous page, you can
     either stop the server, or run this command in a new terminal. If
     you use a new terminal, remember to change to your project directory
-    and activate the env as described in :ref:`install-activate-env`.
-    You'll also need to set ``FLASK_APP`` and ``FLASK_ENV`` as shown on
-    the previous page.
+    and activate the env as described in :doc:`/installation`. You'll
+    also need to set ``FLASK_APP`` and ``FLASK_ENV`` as shown on the
+    previous page.
 
 Run the ``init-db`` command:
 
 .. code-block:: none
 
-    flask init-db
+    $ flask init-db
     Initialized the database.
 
 There will now be a ``flaskr.sqlite`` file in the ``instance`` folder in

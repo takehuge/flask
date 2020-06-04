@@ -31,7 +31,7 @@ statement like ``if`` and ``for``. Unlike Python, blocks are denoted
 by start and end tags rather than indentation since static text within
 a block could change indentation.
 
-.. _Jinja: http://jinja.pocoo.org/docs/templates/
+.. _Jinja: https://jinja.palletsprojects.com/templates/
 .. _HTML: https://developer.mozilla.org/docs/Web/HTML
 
 
@@ -73,7 +73,7 @@ specific sections.
 
 :data:`g` is automatically available in templates. Based on if
 ``g.user`` is set (from ``load_logged_in_user``), either the username
-and a log out link are displayed, otherwise links to register and log in
+and a log out link are displayed, or links to register and log in
 are displayed. :func:`url_for` is also automatically available, and is
 used to generate URLs to views instead of writing them out manually.
 

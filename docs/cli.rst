@@ -1,7 +1,5 @@
 .. currentmodule:: flask
 
-.. _cli:
-
 Command Line Interface
 ======================
 
@@ -10,7 +8,7 @@ interface, in your virtualenv. Executed from the terminal, this script gives
 access to built-in, extension, and application-defined commands. The ``--help``
 option will give more information about any commands and options.
 
-.. _Click: http://click.pocoo.org/
+.. _Click: https://click.palletsprojects.com/
 
 
 Application Discovery
@@ -68,20 +66,18 @@ parts:
     The ``create_app`` factory in ``hello`` is called with the string ``'dev'``
     as the argument.
 
-If ``FLASK_APP`` is not set, the command will look for a file called
-:file:`wsgi.py` or :file:`app.py` and try to detect an application instance or
-factory.
+If ``FLASK_APP`` is not set, the command will try to import "app" or
+"wsgi" (as a ".py" file, or package) and try to detect an application
+instance or factory.
 
 Within the given import, the command looks for an application instance named
 ``app`` or ``application``, then any application instance. If no instance is
 found, the command looks for a factory function named ``create_app`` or
 ``make_app`` that returns an instance.
 
-When calling an application factory, if the factory takes an argument named
-``info``, then the :class:`~cli.ScriptInfo` instance is passed as a keyword
-argument. If parentheses follow the factory name, their contents are parsed
-as Python literals and passes as arguments to the function. This means that
-strings must still be in quotes.
+If parentheses follow the factory name, their contents are parsed as
+Python literals and passed as arguments and keyword arguments to the
+function. This means that strings must still be in quotes.
 
 
 Run the Development Server
@@ -97,7 +93,7 @@ replaces the :meth:`Flask.run` method in most cases. ::
 .. warning:: Do not use this command to run your application in production.
     Only use the development server during development. The development server
     is provided for convenience, but is not designed to be particularly secure,
-    stable, or efficient. See :ref:`deployment` for how to run in production.
+    stable, or efficient. See :doc:`/deploying/index` for how to run in production.
 
 
 Open a Shell
@@ -142,6 +138,25 @@ reloader.
      * Restarting with inotify reloader
      * Debugger is active!
      * Debugger PIN: 223-456-919
+
+
+Watch Extra Files with the Reloader
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When using development mode, the reloader will trigger whenever your
+Python code or imported modules change. The reloader can watch
+additional files with the ``--extra-files`` option, or the
+``FLASK_RUN_EXTRA_FILES`` environment variable. Multiple paths are
+separated with ``:``, or ``;`` on Windows.
+
+.. code-block:: none
+
+    $ flask run --extra-files file1:dirA/file2:dirB/
+    # or
+    $ export FLASK_RUN_EXTRA_FILES=file1:dirA/file2:dirB/
+    $ flask run
+     * Running on http://127.0.0.1:8000/
+     * Detected change in '/path/to/file1', reloading
 
 
 Debug Mode
@@ -191,10 +206,10 @@ environment variables. The variables use the pattern
 ``FLASK_COMMAND_OPTION``. For example, to set the port for the run
 command, instead of ``flask run --port 8000``:
 
-.. code-block:: none
+.. code-block:: bash
 
-    export FLASK_RUN_PORT=8000
-    flask run
+    $ export FLASK_RUN_PORT=8000
+    $ flask run
      * Running on http://127.0.0.1:8000/
 
 These can be added to the ``.flaskenv`` file just like ``FLASK_APP`` to
@@ -207,9 +222,9 @@ Disable dotenv
 The ``flask`` command will show a message if it detects dotenv files but
 python-dotenv is not installed.
 
-.. code-block:: none
+.. code-block:: bash
 
-    flask run
+    $ flask run
      * Tip: There are .env files present. Do "pip install python-dotenv" to use them.
 
 You can tell Flask not to load dotenv files even when python-dotenv is
@@ -219,10 +234,10 @@ a project runner that loads them already. Keep in mind that the
 environment variables must be set before the app loads or it won't
 configure as expected.
 
-.. code-block:: none
+.. code-block:: bash
 
-    export FLASK_SKIP_DOTENV=1
-    flask run
+    $ export FLASK_SKIP_DOTENV=1
+    $ flask run
 
 
 Environment Variables From virtualenv
@@ -234,11 +249,11 @@ script. Activating the virtualenv will set the variables.
 
 Unix Bash, :file:`venv/bin/activate`::
 
-    export FLASK_APP=hello
+    $ export FLASK_APP=hello
 
 Windows CMD, :file:`venv\\Scripts\\activate.bat`::
 
-    set FLASK_APP=hello
+    > set FLASK_APP=hello
 
 It is preferred to use dotenv support over this, since :file:`.flaskenv` can be
 committed to the repository so that it works automatically wherever the project
@@ -251,7 +266,7 @@ Custom Commands
 The ``flask`` command is implemented using `Click`_. See that project's
 documentation for full information about writing commands.
 
-This example adds the command ``create_user`` that takes the argument
+This example adds the command ``create-user`` that takes the argument
 ``name``. ::
 
     import click
@@ -259,14 +274,14 @@ This example adds the command ``create_user`` that takes the argument
 
     app = Flask(__name__)
 
-    @app.cli.command()
-    @click.argument('name')
+    @app.cli.command("create-user")
+    @click.argument("name")
     def create_user(name):
         ...
 
 ::
 
-    flask create_user admin
+    $ flask create-user admin
 
 This example adds the same command, but as ``user create``, a command in a
 group. This is useful if you want to organize multiple related commands. ::
@@ -287,10 +302,65 @@ group. This is useful if you want to organize multiple related commands. ::
 
 ::
 
-    flask user create demo
+    $ flask user create demo
 
 See :ref:`testing-cli` for an overview of how to test your custom
 commands.
+
+
+Registering Commands with Blueprints
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If your application uses blueprints, you can optionally register CLI
+commands directly onto them. When your blueprint is registered onto your
+application, the associated commands will be available to the ``flask``
+command. By default, those commands will be nested in a group matching
+the name of the blueprint.
+
+.. code-block:: python
+
+    from flask import Blueprint
+
+    bp = Blueprint('students', __name__)
+
+    @bp.cli.command('create')
+    @click.argument('name')
+    def create(name):
+        ...
+
+    app.register_blueprint(bp)
+
+.. code-block:: text
+
+    $ flask students create alice
+
+You can alter the group name by specifying the ``cli_group`` parameter
+when creating the :class:`Blueprint` object, or later with
+:meth:`app.register_blueprint(bp, cli_group='...') <Flask.register_blueprint>`.
+The following are equivalent:
+
+.. code-block:: python
+
+    bp = Blueprint('students', __name__, cli_group='other')
+    # or
+    app.register_blueprint(bp, cli_group='other')
+
+.. code-block:: text
+
+    $ flask other create alice
+
+Specifying ``cli_group=None`` will remove the nesting and merge the
+commands directly to the application's level:
+
+.. code-block:: python
+
+    bp = Blueprint('students', __name__, cli_group=None)
+    # or
+    app.register_blueprint(bp, cli_group=None)
+
+.. code-block:: text
+
+    $ flask create alice
 
 
 Application Context
@@ -306,7 +376,7 @@ decorator instead of the Flask decorator, you can use
     import click
     from flask.cli import with_appcontext
 
-    @click.command
+    @click.command()
     @with_appcontext
     def do_work():
         ...
@@ -340,7 +410,7 @@ they are installed. Entry points are specified in :file:`setup.py` ::
     )
 
 
-.. _entry point: https://packaging.python.org/tutorials/distributing-packages/#entry-points
+.. _entry point: https://packaging.python.org/tutorials/packaging-projects/#entry-points
 
 Inside :file:`flask_my_extension/commands.py` you can then export a Click
 object::
@@ -409,16 +479,16 @@ script is available. Note that you don't need to set ``FLASK_APP``. ::
     The ``flask`` command, being separate from your code, does not have
     this issue and is recommended in most cases.
 
-.. _console script: https://packaging.python.org/tutorials/distributing-packages/#console-scripts
+.. _console script: https://packaging.python.org/tutorials/packaging-projects/#console-scripts
 
 
 PyCharm Integration
 -------------------
 
-Prior to PyCharm 2018.1, the Flask CLI features weren't yet fully
-integrated into PyCharm. We have to do a few tweaks to get them working
-smoothly. These instructions should be similar for any other IDE you
-might want to use.
+PyCharm Professional provides a special Flask run configuration. For
+the Community Edition, we need to configure it to call the ``flask run``
+CLI command with the correct environment variables. These instructions
+should be similar for any other IDE you might want to use.
 
 In PyCharm, with your project open, click on *Run* from the menu bar and
 go to *Edit Configurations*. You'll be greeted by a screen similar to
@@ -427,7 +497,7 @@ this:
 .. image:: _static/pycharm-runconfig.png
     :align: center
     :class: screenshot
-    :alt: screenshot of pycharm's run configuration settings
+    :alt: Screenshot of PyCharms's run configuration settings.
 
 There's quite a few options to change, but once we've done it for one
 command, we can easily copy the entire configuration and make a single
@@ -435,9 +505,9 @@ tweak to give us access to other commands, including any custom ones you
 may implement yourself.
 
 Click the + (*Add New Configuration*) button and select *Python*. Give
-the configuration a good descriptive name such as "Run Flask Server".
-For the ``flask run`` command, check "Single instance only" since you
-can't run the server more than once at the same time.
+the configuration a name such as "flask run". For the ``flask run``
+command, check "Single instance only" since you can't run the server
+more than once at the same time.
 
 Select *Module name* from the dropdown (**A**) then input ``flask``.
 
@@ -448,7 +518,8 @@ the development server.
 You can skip this next step if you're using :ref:`dotenv`. We need to
 add an environment variable (**C**) to identify our application. Click
 on the browse button and add an entry with ``FLASK_APP`` on the left and
-the Python import or file on the right (``hello`` for example).
+the Python import or file on the right (``hello`` for example). Add an
+entry with ``FLASK_ENV`` and set it to ``development``.
 
 Next we need to set the working directory (**D**) to be the folder where
 our application resides.

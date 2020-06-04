@@ -1,5 +1,3 @@
-.. _errorpages:
-
 Custom Error Pages
 ==================
 
@@ -41,7 +39,7 @@ even if the application behaves correctly:
     Usually happens on programming errors or if the server is overloaded.
     A terribly good idea is to have a nice page there, because your
     application *will* fail sooner or later (see also:
-    :ref:`application-errors`).
+    :doc:`/errorhandling`).
 
 
 Error Handlers
@@ -74,7 +72,7 @@ Here is an example implementation for a "404 Page Not Found" exception::
         # note that we set the 404 status explicitly
         return render_template('404.html'), 404
 
-When using the :ref:`application factory pattern <app-factories>`::
+When using the :doc:`appfactories`::
 
     from flask import Flask, render_template
 
@@ -97,3 +95,29 @@ An example template might be this:
       <p>What you were looking for is just not there.
       <p><a href="{{ url_for('index') }}">go somewhere nice</a>
     {% endblock %}
+
+
+Returning API errors as JSON
+----------------------------
+
+When using Flask for web APIs, you can use the same techniques as above
+to return JSON responses to API errors.  :func:`~flask.abort` is called
+with a ``description`` parameter. The :meth:`~flask.errorhandler` will
+use that as the JSON error message, and set the status code to 404.
+
+.. code-block:: python
+
+    from flask import abort, jsonify
+
+    @app.errorhandler(404)
+    def resource_not_found(e):
+        return jsonify(error=str(e)), 404
+
+    @app.route("/cheese")
+    def get_one_cheese():
+        resource = get_resource()
+
+        if resource is None:
+            abort(404, description="Resource not found")
+
+        return jsonify(resource)

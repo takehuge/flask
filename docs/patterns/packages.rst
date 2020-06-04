@@ -1,11 +1,7 @@
-.. _larger-applications:
+Large Applications as Packages
+==============================
 
-Larger Applications
-===================
-
-For larger applications it's a good idea to use a package instead of a
-module.  That is quite simple.  Imagine a small application looks like
-this::
+Imagine a simple flask application structure that looks like this::
 
     /yourapplication
         yourapplication.py
@@ -17,8 +13,10 @@ this::
             login.html
             ...
 
-The :ref:`tutorial <tutorial>` is structured this way, see the
-:gh:`example code <examples/tutorial>`.
+While this is fine for small applications, for larger applications
+it's a good idea to use a package instead of a module.
+The :doc:`/tutorial/index` is structured to use the package pattern,
+see the :gh:`example code <examples/tutorial>`.
 
 Simple Packages
 ---------------
@@ -61,19 +59,19 @@ a big problem, just add a new file called :file:`setup.py` next to the inner
 In order to run the application you need to export an environment variable
 that tells Flask where to find the application instance::
 
-    export FLASK_APP=yourapplication
+    $ export FLASK_APP=yourapplication
 
 If you are outside of the project directory make sure to provide the exact
 path to your application directory. Similarly you can turn on the
 development features like this::
 
-    export FLASK_ENV=development
+    $ export FLASK_ENV=development
 
 In order to install and run the application you need to issue the following
 commands::
 
-    pip install -e .
-    flask run
+    $ pip install -e .
+    $ flask run
 
 What did we gain from this?  Now we can restructure the application a bit
 into multiple modules.  The only thing you have to remember is the
@@ -129,10 +127,8 @@ You should then end up with something like that::
 
    There are still some problems with that approach but if you want to use
    decorators there is no way around that.  Check out the
-   :ref:`becomingbig` section for some inspiration how to deal with that.
+   :doc:`/becomingbig` section for some inspiration how to deal with that.
 
-
-.. _working-with-modules:
 
 Working with Blueprints
 -----------------------
@@ -140,4 +136,4 @@ Working with Blueprints
 If you have larger applications it's recommended to divide them into
 smaller groups where each group is implemented with the help of a
 blueprint.  For a gentle introduction into this topic refer to the
-:ref:`blueprints` chapter of the documentation.
+:doc:`/blueprints` chapter of the documentation.
